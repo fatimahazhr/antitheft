@@ -31,7 +31,7 @@ Dataset yang digunakan merupakan dataset wajah custom, terdiri dari:
 
 * Foto wajah pemilik (class: `"fat"`)
 * Diambil dalam berbagai pencahayaan dan ekspresi
-* Jumlah: ± 100–200 gambar
+* Jumlah: 95 gambar
 * Format: `.jpg`
 
 ### **3. Labeling**
@@ -81,8 +81,6 @@ Model yang digunakan pada sistem ini:
 
 ## 🔧 **System Flow**
 
-**Input → Process → Output**
-
 1. Webcam menangkap gambar pengemudi
 2. YOLO mendeteksi wajah dan mengklasifikasikan sebagai:
 
@@ -131,9 +129,3 @@ Sistem ini dapat dikembangkan lebih lanjut untuk:
 * Integrasi ke IoV ecosystem
 
 
-✅ Tambahin **diagram arsitektur** (teks / ASCII)
-✅ Buatkan **flowchart**
-✅ Tambahkan **contoh gambar**
-✅ Auto-generate README + folder structure (siap upload GitHub)
-
-Mau ditambahin yang mana, Tom?
