@@ -1,0 +1,7 @@
+path: C:\Users\Acer\AI_OJD\dataset
+train: C:\Users\Acer\AI_OJD\dataset\images\train
+val: C:\Users\Acer\AI_OJD\dataset\images\train
+
+names:
+  0: fat
+  1: vincent
