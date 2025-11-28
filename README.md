@@ -4,55 +4,58 @@
 
 ---
 
-## 📌 **Background**
+## 📌 Background
 
-Kasus pencurian kendaraan semakin meningkat, terutama pada kendaraan tanpa sistem keamanan tambahan. Salah satu kelemahan sistem keamanan konvensional seperti alarm adalah tidak adanya identifikasi pengemudi secara langsung.
+Kasus pencurian kendaraan masih sering terjadi, terutama pada kendaraan yang belum dilengkapi sistem keamanan berbasis identitas. Sistem anti-theft tradisional seperti alarm atau immobilizer tidak mampu mengenali siapa yang sebenarnya mengemudikan kendaraan.
 
 Project ini dikembangkan untuk membuat **Anti-Theft System berbasis Computer Vision**, yang mampu:
 
 * Mendeteksi wajah pengemudi secara real-time
 * Mengidentifikasi apakah pengemudi adalah **owner** atau **stranger**
-* Mengirimkan **notifikasi Telegram + foto pengemudi** jika ada orang tak dikenal mencoba mengemudikan kendaraan
-* Menggunakan perangkat minimal: laptop + webcam
+* Mengirimkan **notifikasi Telegram + foto** ketika orang asing masuk ke kendaraan
+* Berjalan menggunakan perangkat minimal (laptop + webcam)
 
-Pemilihan topik ini dilakukan karena:
+Alasan pemilihan topik:
 
-* Sistem keamanan berbasis identitas wajah jauh lebih sulit dipalsukan
-* Implementasi mudah, scalable, dan bisa dipasang di kendaraan modern
-* Menjadi dasar untuk fitur IoV (Internet of Vehicle) tingkat lanjut
+* Sistem keamanan berbasis wajah sulit dipalsukan
+* Dapat diintegrasikan dengan teknologi IoV (Internet of Vehicle)
+* Implementasi lightweight dan scalable untuk otomotif modern
 
 ---
 
-## 📂 **Dataset**
+## 📂 Dataset
 
-Dataset yang digunakan merupakan dataset wajah custom, terdiri dari:
+Dataset merupakan dataset wajah custom untuk single-class detection.
 
 ### **1. Data Owner**
 
-* Foto wajah pemilik (class: `"fat"`)
-* Diambil dalam berbagai pencahayaan dan ekspresi
-* Jumlah: 95 gambar
+* Class: `"fat"`
+* 95 gambar wajah
+* Variasi pose & pencahayaan
 * Format: `.jpg`
+
+### **2. Data Non-owner (negatif)**
+
+(Tidak digunakan untuk training → model hanya belajar mengenali owner)
+Non-owner dikenali melalui *logic* di aplikasi (fail-safe).
 
 ### **3. Labeling**
 
-* Dilakukan dengan **LabelImg**
-* Label: `fat` (owner)
-
-Dataset kemudian di-convert ke format YOLO (`.txt` per image).
+* Tool: **LabelImg**
+* Format annotation: YOLO (`.txt` per image)
 
 ---
 
-## 🧠 **Model**
+## 🧠 Model
 
-Model yang digunakan pada sistem ini:
+Model yang digunakan:
 
 ### **✨ YOLOv8 Custom Training**
 
-* Base model: `YOLOv8n` atau `YOLOv8s`
-* Task: Face detection & classification
-* Training dilakukan menggunakan *Ultralytics YOLO*
-* Output model disimpan pada:
+* Base: `YOLOv8n` (lightweight)
+* Task: single-class detection
+* Framework: Ultralytics YOLO
+* Output model:
 
   ```
   runs/detect/train7/weights/best.pt
@@ -60,75 +63,136 @@ Model yang digunakan pada sistem ini:
 
 ### **Hyperparameters**
 
-* Confidence filter: `0.25`
-* Owner threshold: `0.75`
-  → Jika wajah terdeteksi sebagai owner tetapi confidence < 0.75, dianggap stranger (*fail-safe mode*).
+* `MODEL_CONF_FILTER = 0.25` → confidence minimum untuk menampilkan deteksi
+* `CONF_THRESHOLD_FOR_OWNER = 0.75`
+
+  * Jika wajah terdeteksi sebagai owner tapi confidence < 0.75 → dianggap stranger
+  * Fail-safe untuk menghindari false-positive
 
 ---
 
-## 📈 **Model Performance (Metrics)**
+## 📈 Model Performance (Metrics)
+
 <img width="2400" height="1200" alt="results" src="https://github.com/user-attachments/assets/aa54c36a-08ec-4d52-bff0-c1fef8d69d99" />
 
+**Ringkasan hasil training:**
 
-![val_batch1_pred](https://github.com/user-attachments/assets/bfd6d58c-ea42-4ae2-866e-a55e4ed5de62)
+* mAP50: **0.992**
+* mAP50-95: **0.848**
+* Precision: **0.99**
+* Recall: **0.98**
 
+Contoh prediksi validation batch:
+
+![val\_batch1\_pred](https://github.com/user-attachments/assets/bfd6d58c-ea42-4ae2-866e-a55e4ed5de62)
+
+Confusion matrix:
 
 <img width="3000" height="2250" alt="confusion_matrix" src="https://github.com/user-attachments/assets/d9af6029-2cd2-4c35-8f45-b56e0b0b59f0" />
 
+---
+
+## 🧩 System Architecture / Flow
+
+1. Webcam mengambil gambar secara real-time
+2. Model YOLO mendeteksi wajah
+3. Sistem mengklasifikasikan:
+
+   * **Owner → label = fat, conf ≥ 0.75**
+   * **Stranger → label ≠ fat atau conf < 0.75**
+4. Jika stranger:
+
+   * Capture frame
+   * Kirim notifikasi Telegram
+   * Kirim foto stranger
+5. Tampilkan bounding box:
+
+   * 🟢 Hijau = owner
+   * 🔴 Merah = stranger
+
+---
+
+## 🧪 How to Run
+
+### **1. Clone Repository**
+
+```bash
+git clone https://github.com/fatimahazhr/antitheft.git
+cd anti-theft-yolo
+```
+
+### **2. Install Dependencies**
+
+```bash
+pip install ultralytics opencv-python requests
+```
+
+### **3. Download / Copy Model**
+
+Letakkan file:
+
+```
+best.pt  → runs/detect/train7/weights/best.pt
+```
+
+### **4. Jalankan Program**
+
+```bash
+python anti_theft.py
 ```
 
 ---
 
-## 🔧 **System Flow**
+## 📁 Project Structure
 
-1. Webcam menangkap gambar pengemudi
-2. YOLO mendeteksi wajah dan mengklasifikasikan sebagai:
-
-   * **Owner** (label = fat, conf ≥ 0.75)
-   * **Stranger** (label ≠ fat, atau conf < threshold)
-3. Jika stranger terdeteksi:
-
-   * Capture frame wajah
-   * Kirim **notifikasi Telegram**
-   * Kirim **foto realtime** ke Telegram
-4. Sistem menampilkan bounding box warna:
-
-   * **Hijau → Owner**
-   * **Merah → Stranger**
+```
+📦 Anti-Theft
+├── 📂 runs/
+│   └── detect/train7/weights/best.pt
+├── 📂 dataset/
+│   ├── images/
+│   └── labels/
+├── anti_theft.py
+├── README.md
+└── requirements.txt
+```
 
 ---
 
-## 📬 **Telegram Integration**
+## 📬 Telegram Integration
 
-Sistem mengirimkan alert melalui Telegram:
-<img width="655" height="526" alt="image" src="https://github.com/user-attachments/assets/429edbc9-a5a2-4b3b-8dc4-a455cf5f5ac7" />
+Sistem mengirimkan alert melalui Telegram API:
 
-<img width="412" height="846" alt="image" src="https://github.com/user-attachments/assets/da0b68db-25d1-4dd3-abde-c90054971724" />
+* Notifikasi teks (label + confidence + waktu)
+* Foto stranger
+* Cooldown notifikasi: **5 detik**
 
-* Pesan teks berisi:
-
-  * label prediksi
-  * confidence
-  * timestamp
-* Foto wajah stranger yang tertangkap kamera
-* Cooldown notifikasi: **5 detik** (untuk menghindari spam)
+> **Security Note:**
+> Jangan pernah commit bot token ke repository publik.
+> Gunakan environment variable:
+>
+> ```
+> BOT_TOKEN = os.getenv("BOT_TOKEN")
+> ```
 
 ---
 
-## 🏁 **Kesimpulan**
+## 📝 Conclusion
 
-Project Anti-Theft Driver Recognition ini berhasil menunjukkan bahwa:
+Sistem Anti-Theft Driver Recognition ini berhasil membuktikan bahwa:
 
-* Identifikasi pengemudi berbasis Computer Vision efektif untuk mendeteksi orang asing
-* Sistem ini dapat berjalan real-time bahkan dengan hardware sederhana (webcam + laptop)
-* Integrasi Telegram meningkatkan respons cepat terhadap potensi pencurian
-* Custom training YOLO memberikan akurasi baik untuk kasus single-user owner
+* Pengenalan pengemudi menggunakan YOLO dapat bekerja secara real-time
+* Dengan hanya satu class (owner), sistem tetap dapat mendeteksi stranger melalui fail-safe logic
+* Integrasi Telegram membuat respon terhadap risiko pencurian menjadi lebih cepat
+* Sistem ringan dan dapat digunakan sebagai dasar teknologi keamanan kendaraan modern
 
-Sistem ini dapat dikembangkan lebih lanjut untuk:
+---
 
-* Integrasi dengan CAN Bus untuk memblok starting engine
-* Menyimpan log ke cloud
-* Multi-owner recognition
-* Integrasi ke IoV ecosystem
+## 🚀 Future Work
 
+* Menambah multi-owner recognition
+* Integrasi dengan IoV (engine lock melalui CAN Bus)
+* Menambah dataset non-owner untuk meningkatkan robustness
+* Penanganan low light dan occlusion
+* Mobile app untuk notifikasi terintegrasi
 
