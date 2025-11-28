@@ -101,6 +101,9 @@ Model yang digunakan pada sistem ini:
 ## 📬 **Telegram Integration**
 
 Sistem mengirimkan alert melalui Telegram:
+<img width="655" height="526" alt="image" src="https://github.com/user-attachments/assets/429edbc9-a5a2-4b3b-8dc4-a455cf5f5ac7" />
+
+<img width="412" height="846" alt="image" src="https://github.com/user-attachments/assets/da0b68db-25d1-4dd3-abde-c90054971724" />
 
 * Pesan teks berisi:
 
