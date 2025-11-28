@@ -118,7 +118,7 @@ Confusion matrix:
 
 ```bash
 git clone https://github.com/fatimahazhr/antitheft.git
-cd anti-theft-yolo
+cd antitheft
 ```
 
 ### **2. Install Dependencies**
@@ -138,7 +138,7 @@ best.pt  → runs/detect/train7/weights/best.pt
 ### **4. Jalankan Program**
 
 ```bash
-python anti_theft.py
+python livecam2.py
 ```
 
 ---
@@ -152,7 +152,7 @@ python anti_theft.py
 ├── 📂 dataset/
 │   ├── images/
 │   └── labels/
-├── anti_theft.py
+├── livecam2.py
 ├── README.md
 └── requirements.txt
 ```
